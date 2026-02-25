@@ -1,4 +1,5 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
@@ -6,6 +7,25 @@ class NotificationService {
   final FlutterLocalNotificationsPlugin notificationsPlugin = FlutterLocalNotificationsPlugin();
 
   Future<void> initNotification() async {
+    PermissionStatus status = await Permission.notification.request();
+
+    if (status.isGranted) {
+      print("Notification permission granted");
+    } else{
+      // Take the user to the app settings if they've checked "Don't ask again"
+      await openAppSettings();
+    }
+
+    // Check the current status
+    PermissionStatus statuss = await Permission.scheduleExactAlarm.status;
+
+    if (statuss.isDenied) {
+      // This opens the "Alarms & Reminders" special access screen
+      await Permission.scheduleExactAlarm.request();
+    } else if (statuss.isPermanentlyDenied) {
+      // If the user previously said no, you may need to guide them to App Settings
+      await openAppSettings();
+    }
     // 1. Initialize Timezones
     tz.initializeTimeZones();
 
